@@ -24,3 +24,11 @@ class RunInput(BaseModel):
 class ConclusionInput(BaseModel):
     conclusion:str=Field(min_length=4,max_length=3000)
     published:bool=False
+class SupplementDrawInput(BaseModel):
+    plan_id:int=Field(gt=0)
+    per_stratum:int=Field(default=2,ge=1,le=50)
+class SupplementResponseInput(BaseModel):
+    outcome:Literal['responded','refused','unreachable']
+    retest_score:float|None=Field(default=None,ge=0,le=100,allow_inf_nan=False)
+    note:str=Field(default='',max_length=1000)
+    expected_version:int|None=Field(default=None,ge=0)

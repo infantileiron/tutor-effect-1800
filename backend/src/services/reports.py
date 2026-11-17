@@ -4,13 +4,16 @@ from sqlalchemy import select
 from fastapi import HTTPException
 import redis
 from src.models.entities import Report,Plan
+from src.services import supplement
 queue=redis.Redis.from_url(os.environ['REDIS_URL'])
 def list_reports(db): return db.scalars(select(Report).order_by(Report.id.desc())).all()
 def create_report(db,plan_id):
     if not db.get(Plan,plan_id): raise HTTPException(404,'辅导方案不存在')
     running=db.scalars(select(Report).where(Report.status.in_(['queued','running']))).all()
     if len(running)>=10: raise HTTPException(429,'待执行任务已达10个，请稍后再试')
-    item=Report(plan_id=plan_id,status='queued',created_at=datetime.now(timezone.utc).isoformat())
+    # 受理时封存补测回应：此后新登记或修订的回应不会改写本报告。
+    snapshot=supplement.analysis_for_plan(db,plan_id)
+    item=Report(plan_id=plan_id,status='queued',supplement_snapshot=snapshot,created_at=datetime.now(timezone.utc).isoformat())
     db.add(item);db.commit();db.refresh(item)
     queue.lpush('tutor:reports',item.id)
     return item

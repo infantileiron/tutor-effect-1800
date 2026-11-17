@@ -22,7 +22,7 @@ def export(id:int,db=Depends(get_db),user=Depends(current_user)):
     item=reports.get_report(db,id)
     if item.status!='completed': raise HTTPException(409,'报告尚未完成')
     result=dict(item.result);result.pop('sample_snapshot',None)
-    content={'report_id':item.id,'plan_id':item.plan_id,'created_at':item.created_at,'published':item.published,'conclusion':item.conclusion,'statistics':result,'sample_snapshot':item.result['sample_snapshot']}
+    content={'report_id':item.id,'plan_id':item.plan_id,'created_at':item.created_at,'published':item.published,'conclusion':item.conclusion,'statistics':result,'sample_snapshot':item.result['sample_snapshot'],'supplement_accepted_snapshot':item.supplement_snapshot}
     return Response(json.dumps(content,ensure_ascii=False,indent=2),media_type='application/json',headers={'Content-Disposition':f'attachment; filename="tutor-effect-report-{id}.json"'})
 @router.get('/audit')
 def audit(db=Depends(get_db),user=Depends(admin)): return serialize_many(db.scalars(select(Audit).order_by(Audit.id.desc()).limit(100)).all())
